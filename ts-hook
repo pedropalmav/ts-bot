@@ -1,0 +1,15 @@
+#!/usr/bin/env python3
+"""task-spooler TS_ONFINISH entry point.
+
+Must stay an executable file on disk: task-spooler runs it with execlp(), so it
+is resolved as a program, not imported as a module.
+"""
+
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from tsbot.cli import main  # noqa: E402
+
+raise SystemExit(main())

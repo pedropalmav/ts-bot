@@ -1,0 +1,72 @@
+# ts-bot configuration.
+#
+# Copy to ~/.config/ts-bot/config.toml and `chmod 600` it -- this file holds a
+# bot token, and anyone who can read it can post as your bot.
+
+[telegram]
+# Leave empty and export TS_BOT_TOKEN / TS_BOT_CHAT_ID instead if you would
+# rather keep the secrets out of files. The environment wins over this file.
+token   = ""
+chat_id = ""
+
+# The hook holds the job's task-spooler slot while it runs, so keep this tight.
+timeout_seconds = 10
+
+api_base_url = "https://api.telegram.org"
+
+[notify]
+on_success = true    # set false for failure-only mode
+on_failure = true
+
+# Job duration is looked up with `<ts_command> -i <jobid>`; set false to skip
+# the subprocess entirely.
+duration   = true
+ts_command = "ts"    # "tsp" on Debian/Ubuntu
+
+[log]
+# How much of the output file to read, counting back from the end. The file is
+# never read whole -- job logs are routinely hundreds of megabytes.
+tail_bytes = 65536
+tail_lines = 30
+
+# Scan the tail for a Python traceback or an ERROR/FATAL marker and send that
+# instead of a blind tail. Falls back to the tail when nothing matches.
+extract_errors = true
+
+# Upload the log as a .txt attachment when the message cannot show all of it.
+attach_full_log      = true
+max_attachment_bytes = 5242880   # 5 MB
+
+[templates]
+# Rendered with parse_mode=HTML, so <b> <i> <code> <pre> work and interpolated
+# values are escaped for you.
+#
+# Placeholders:
+#   {jobid}     job id from task-spooler
+#   {command}   the command that was queued
+#   {exit_code} "exit 3", or "killed or crashed (signal)" for -1
+#   {status}    "success" or "failure"
+#   {label}     "[name] " when TS_BOT_LABEL is set, otherwise empty
+#   {duration}  " · 3m12s" when known, otherwise empty
+#   {detected}  "detected: RuntimeError" line when an error was identified
+#   {log}       the error excerpt (failure template only)
+#   {host}      server hostname
+#   {output_file} path to task-spooler's output file
+#
+# {label}, {duration} and {detected} include their own separators, so a single
+# template reads correctly whether or not they are present.
+
+success = """
+✅ {label}Job <b>{jobid}</b> finished cleanly{duration}
+<code>{command}</code>
+"""
+
+failure = """
+❌ {label}Job <b>{jobid}</b> failed — {exit_code}{duration}
+<code>{command}</code>
+{detected}<pre>{log}</pre>
+"""
+
+[debug]
+# Troubleshooting only. Set TS_BOT_DEBUG=1 to also log to stderr.
+log_file = ""    # e.g. "~/.local/state/ts-bot/debug.log"
